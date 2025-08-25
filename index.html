@@ -7,8 +7,6 @@
     <meta name="description" content="Швидке замовлення унікального гравіювання на жетонах та брелоках. Запитуйте у Viber та Telegram.">
 
     <style>
-        /* --- 1. Агрессивная оптимизация: ВСЕ стили внутри HTML --- */
-        /* --- Сброс стилей и основные настройки --- */
         :root {
             --bg-color: #f4f6f9;
             --card-bg: #ffffff;
@@ -17,6 +15,7 @@
             --viber-color: #7360F2;
             --telegram-color: #2AABEE;
             --disabled-color: #bdc3c7;
+            --error-color: #e74c3c; /* Цвет для ошибки */
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
@@ -28,8 +27,6 @@
             -webkit-font-smoothing: antialiased;
         }
         .container { max-width: 900px; margin: 0 auto; padding: 0 15px; }
-
-        /* --- Шапка --- */
         .header {
             background-color: var(--card-bg);
             padding: 15px 0;
@@ -37,8 +34,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .header h1 { font-size: 1.5em; color: var(--text-color); }
-
-        /* --- Кнопки связи --- */
         .contact-buttons {
             display: flex;
             gap: 15px;
@@ -64,8 +59,6 @@
         .contact-btn.viber { background-color: var(--viber-color); }
         .contact-btn.telegram { background-color: var(--telegram-color); }
         .contact-btn svg { width: 20px; height: 20px; margin-right: 8px; fill: white; }
-
-        /* --- Карточки товаров --- */
         .products { padding: 25px 0; }
         .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .product-card {
@@ -89,12 +82,8 @@
             color: var(--price-color);
             padding: 15px 10px;
         }
-
-        /* --- Текстовый блок --- */
         .text-block { padding: 20px 0; text-align: center; }
         .text-block p { max-width: 600px; margin: 0 auto; font-size: 1.1em; color: #555; }
-        
-        /* --- Модальное окно (Попап) для галереи и формы --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -134,10 +123,8 @@
             border: none;
             background: none;
         }
-        
-        /* --- Стили для попапа с формой --- */
         #contactPopup h2 { margin-bottom: 20px; text-align: center; font-size: 1.3em; }
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; position: relative; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
         .form-group input {
             width: 100%;
@@ -145,7 +132,26 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1em;
+            transition: border-color 0.2s ease;
         }
+        
+        /* --- СТИЛИ ДЛЯ ВАЛИДАЦИИ --- */
+        input.error { border-color: var(--error-color); }
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85em;
+            margin-top: 5px;
+            /* По умолчанию скрыто */
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+        .error-message.visible {
+            max-height: 20px; /* Достаточно места для одной строки текста */
+            opacity: 1;
+        }
+
         #finalActionBtn {
             width: 100%;
             padding: 15px;
@@ -155,18 +161,18 @@
             font-weight: bold;
             font-size: 1.1em;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, opacity 0.2s;
             text-decoration: none;
             display: block;
             text-align: center;
         }
-        #finalActionBtn:disabled {
-            background-color: var(--disabled-color);
+        #finalActionBtn.viber { background-color: var(--viber-color); }
+        #finalActionBtn.telegram { background-color: var(--telegram-color); }
+        #finalActionBtn.disabled {
+            background-color: #6c93db;
             cursor: not-allowed;
             opacity: 0.7;
         }
-
-        /* --- Стили для галереи --- */
         #galleryModal .modal-content { padding: 0; max-width: 500px; background: transparent; }
         #galleryImage { max-width: 100%; max-height: 80vh; display: block; border-radius: 8px; }
         .gallery-nav {
@@ -185,13 +191,135 @@
         .gallery-nav.prev { left: 10px; }
         .gallery-nav.next { right: 10px; }
 
+        /* --- СТИЛИ ДЛЯ НОВОЙ ГАЛЕРЕИ --- */
+#imageModal .modal-content-gallery {
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#expandedImg {
+    max-width: 100%;
+    max-height: 90vh;
+    display: block;
+    border-radius: 12px;
+    object-fit: contain;
+}
+#imageModal .gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(40,40,40,0.6);
+    color: white;
+    border: none;
+    font-size: 2em;
+    cursor: pointer;
+    padding: 8px 18px;
+    border-radius: 8px;
+    user-select: none;
+    z-index: 10;
+    transition: background 0.2s;
+}
+#imageModal .gallery-nav:hover { background: rgba(0,0,0,0.8); }
+#imageModal .gallery-nav.prev { left: 10px; }
+#imageModal .gallery-nav.next { right: 10px; }
+#imageModal .modal-close {
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    z-index: 10;
+    font-size: 3em;
+    color: white;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    line-height: 38px;
+    text-align: center;
+}
+
+/* Стили для точек */
+#modalDotsContainer {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.dot.active { background-color: white; }
+
+/* Стили и анимация для подсказки свайпа */
+#swipe-hint {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+#swipe-hint.visible {
+    opacity: 1;
+    animation: swipe-animation 2s ease-in-out forwards;
+}
+#swipe-hint.hidden { display: none; }
+#swipe-hint svg { width: 24px; height: 24px; }
+
+@keyframes swipe-animation {
+    0% { transform: translateX(-50%); opacity: 0; }
+    20% { transform: translateX(-50%); opacity: 1; }
+    40% { transform: translateX(calc(-50% - 30px)); }
+    60% { transform: translateX(calc(-50% + 30px)); }
+    80% { transform: translateX(-50%); opacity: 1; }
+    100% { transform: translateX(-50%); opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    #imageModal .gallery-nav { display: none; } /* Скрываем кнопки на мобильных */
+}
     </style>
+
+    <script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', 'ВАШ_ID_ПИКСЕЛЯ');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=ВАШ_ID_ПИКСЕЛЯ&ev=PageView&noscript=1"
+/></noscript>
 </head>
 <body>
 
-    <header class="header">
-        <h1>Gravochka</h1>
-    </header>
+    <header class="header"><h1>Gravochka</h1></header>
 
     <main>
         <div class="contact-buttons">
@@ -204,7 +332,6 @@
                 ЗАПИТАТИ У TELEGRAM
             </a>
         </div>
-
         <section class="products">
             <div class="container">
                 <div class="products-grid">
@@ -232,7 +359,6 @@
                 </div>
             </div>
         </section>
-
         <section class="text-block">
             <div class="container">
                 <p>Створюємо унікальні жетони та брелоки з вашим гравіюванням. Використовуємо нержавіючу сталь, що гарантує довговічність. Швидке виготовлення та доставка по Україні.</p>
@@ -243,101 +369,203 @@
     <div id="contactPopup" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
-            <h2 id="popupTitle">Запит у месенджер</h2>
+            <h2 id="popupTitle">Підтвердіть дію</h2>
             <div class="form-group">
                 <label for="clientName">Введіть ваше ім'я:</label>
                 <input type="text" id="clientName" placeholder="Ваше ім'я" autocomplete="name">
+                <p class="error-message" id="nameError"></p>
             </div>
-            <a href="#" id="finalActionBtn" target="_blank" rel="noopener noreferrer" disabled>
-                Перейти в <span id="messengerName"></span>
-            </a>
+            <a href="#" id="finalActionBtn" target="_blank" rel="noopener noreferrer"></a>
         </div>
     </div>
 
-    <div id="galleryModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <img id="galleryImage" src="" alt="Зображення товару">
-            <button class="gallery-nav prev">&#10094;</button>
-            <button class="gallery-nav next">&#10095;</button>
+ <div id="imageModal" class="modal-overlay">
+    <div class="modal-content-gallery">
+        <button id="closeModalButton" class="modal-close">&times;</button>
+        <img id="expandedImg" src="" alt="Зображення товару">
+        <button id="modalPrev" class="gallery-nav prev">&lt;</button>
+        <button id="modalNext" class="gallery-nav next">&gt;</button>
+        <div id="modalDotsContainer"></div>
+        <div id="swipe-hint" class="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.293 6.293L8.586 11H20v2H8.586l4.707 4.707-1.414 1.414L4.172 12l7.707-7.707 1.414 1.414z"></path></svg>
+            <span>Гортайте</span>
         </div>
     </div>
-
+</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Логика для попапа с формой ---
             const contactPopup = document.getElementById('contactPopup');
             const popupTitle = document.getElementById('popupTitle');
             const clientNameInput = document.getElementById('clientName');
             const finalActionBtn = document.getElementById('finalActionBtn');
-            const messengerNameSpan = document.getElementById('messengerName');
+            const nameError = document.getElementById('nameError');
             const contactButtons = document.querySelectorAll('.contact-btn');
+
+            const validateInput = () => clientNameInput.value.trim().length > 1;
+
+            const showError = () => {
+                nameError.textContent = 'Заповніть, будь ласка, поле';
+                nameError.classList.add('visible');
+                clientNameInput.classList.add('error');
+            };
+
+            const hideError = () => {
+                nameError.classList.remove('visible');
+                clientNameInput.classList.remove('error');
+            };
+            
+            const updateButtonState = () => {
+                if (validateInput()) {
+                    finalActionBtn.classList.remove('disabled');
+                } else {
+                    finalActionBtn.classList.add('disabled');
+                }
+            };
 
             contactButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const messenger = button.dataset.messenger;
                     const link = button.dataset.link;
+                    const buttonText = button.textContent.trim();
+                    const messengerClass = button.classList.contains('viber') ? 'viber' : 'telegram';
                     
-                    popupTitle.textContent = `Запит у ${messenger}`;
-                    messengerNameSpan.textContent = messenger;
+                    finalActionBtn.className = messengerClass;
+                    finalActionBtn.textContent = buttonText; 
                     finalActionBtn.href = link;
+
+                    popupTitle.textContent = `Підтвердіть дію`;
                     clientNameInput.value = '';
-                    finalActionBtn.setAttribute('disabled', 'disabled');
-                    
+                    hideError();
+                    updateButtonState(); // Устанавливаем начальное состояние кнопки (disabled)
                     contactPopup.classList.add('visible');
+                    clientNameInput.focus();
                 });
             });
 
+            // Динамически меняем состояние кнопки при вводе
             clientNameInput.addEventListener('input', () => {
-                if (clientNameInput.value.trim().length > 0) {
-                    finalActionBtn.removeAttribute('disabled');
-                } else {
-                    finalActionBtn.setAttribute('disabled', 'disabled');
+                hideError(); // Прячем ошибку, как только пользователь начинает исправлять
+                updateButtonState();
+            });
+
+            // Главная проверка при клике
+            finalActionBtn.addEventListener('click', (e) => {
+                if (!validateInput()) {
+                    e.preventDefault(); // Блокируем переход по ссылке
+                    showError(); // Показываем ошибку
                 }
             });
 
-            // --- Логика для галереи ---
+            // --- Логика для галереи (без изменений) ---
             const galleryModal = document.getElementById('galleryModal');
-            const galleryImage = document.getElementById('galleryImage');
-            const productImages = document.querySelectorAll('.product-image');
-            const galleryNavPrev = galleryModal.querySelector('.gallery-nav.prev');
-            const galleryNavNext = galleryModal.querySelector('.gallery-nav.next');
+            // ... (весь остальной код галереи и закрытия модальных окон)
+         // --- НОВАЯ ЛОГИКА ГАЛЕРЕИ (с свайпом и подсказкой) ---
+const imageModal = document.getElementById("imageModal");
+if (imageModal) {
+    const modalImg = document.getElementById("expandedImg");
+    const closeImageModalButton = document.getElementById("closeModalButton");
+    const modalPrevBtn = document.getElementById("modalPrev");
+    const modalNextBtn = document.getElementById("modalNext");
+    const dotsContainer = document.getElementById('modalDotsContainer');
+    const swipeHint = document.getElementById('swipe-hint');
+    const productImages = document.querySelectorAll('.product-image'); // Адаптировано для вашего сайта-визитки
 
-            let currentImages = [];
-            let currentIndex = 0;
+    let currentModalImages = [];
+    let currentImageIndex = 0;
 
-            const showImage = (index) => {
-                currentIndex = (index + currentImages.length) % currentImages.length;
-                galleryImage.src = currentImages[currentIndex];
-            };
+    const openImageModal = (images, startIndex = 0) => {
+        imageModal.classList.add('visible');
+        document.body.style.overflow = 'hidden'; // Блокируем скролл фона
+
+        currentModalImages = images;
+        currentImageIndex = startIndex;
+        const hasMultipleImages = currentModalImages.length > 1;
+
+        modalPrevBtn.style.display = hasMultipleImages ? 'block' : 'none';
+        modalNextBtn.style.display = hasMultipleImages ? 'block' : 'none';
+        dotsContainer.innerHTML = '';
+
+        if (hasMultipleImages) {
+            // Показываем анимированную подсказку
+            if (swipeHint) {
+                swipeHint.classList.remove('hidden', 'visible'); // Сброс состояния
+                // Небольшая задержка, чтобы анимация сработала при повторном открытии
+                setTimeout(() => {
+                    swipeHint.classList.add('visible');
+                    swipeHint.addEventListener('animationend', () => swipeHint.classList.add('hidden'), { once: true });
+                }, 100);
+            }
             
-            productImages.forEach(imgContainer => {
-                imgContainer.addEventListener('click', () => {
-                    const imagesAttr = imgContainer.dataset.images;
-                    if (imagesAttr) {
-                        currentImages = imagesAttr.split(',');
-                        showImage(0);
-                        galleryModal.classList.add('visible');
-                    }
-                });
+            // Создаем точки
+            currentModalImages.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.classList.add('dot');
+                dot.addEventListener('click', () => showImage(index));
+                dotsContainer.appendChild(dot);
             });
+        }
+        
+        showImage(currentImageIndex);
+    };
 
-            galleryNavPrev.addEventListener('click', () => showImage(currentIndex - 1));
-            galleryNavNext.addEventListener('click', () => showImage(currentIndex + 1));
-            
-            // --- Общая логика для закрытия модальных окон ---
-            const allModals = document.querySelectorAll('.modal-overlay');
-            allModals.forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal || e.target.classList.contains('modal-close')) {
-                        modal.classList.remove('visible');
-                    }
-                });
-            });
+    const closeImageModal = () => {
+        imageModal.classList.remove('visible');
+        document.body.style.overflow = 'auto'; // Возвращаем скролл
+    };
+
+    const showImage = (index) => {
+        currentImageIndex = (index + currentModalImages.length) % currentModalImages.length;
+        modalImg.src = currentModalImages[currentImageIndex];
+        
+        const allDots = dotsContainer.querySelectorAll('.dot');
+        if (allDots.length > 0) {
+            allDots.forEach(dot => dot.classList.remove('active'));
+            allDots[currentImageIndex].classList.add('active');
+        }
+    };
+    
+    // Навешиваем обработчики кликов на карточки товаров
+    productImages.forEach(imageContainer => {
+        imageContainer.style.cursor = 'pointer';
+        imageContainer.addEventListener('click', () => {
+            const imagesAttr = imageContainer.dataset.images;
+            if (imagesAttr) {
+                const images = imagesAttr.split(',').map(img => img.trim());
+                openImageModal(images, 0);
+            }
+        });
+    });
+
+    // Навигация (кнопки и свайпы)
+    modalPrevBtn.addEventListener('click', () => showImage(currentImageIndex - 1));
+    modalNextBtn.addEventListener('click', () => showImage(currentImageIndex + 1));
+    closeImageModalButton.addEventListener('click', closeImageModal);
+    imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal) closeImageModal();
+    });
+
+    // Логика свайпа
+    let touchStartX = 0;
+    imageModal.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    imageModal.addEventListener('touchend', e => {
+        let touchEndX = e.changedTouches[0].clientX;
+        if (touchStartX - touchEndX > 50) showImage(currentImageIndex + 1); // Свайп влево
+        if (touchStartX - touchEndX < -50) showImage(currentImageIndex - 1); // Свайп вправо
+    }, { passive: true });
+}
+// --- КОНЕЦ НОВОЙ ЛОГИКИ ГАЛЕРЕИ ---
+
+            // Этот код находит все попапы на странице и добавляет им логику закрытия
+const allModals = document.querySelectorAll('.modal-overlay');
+allModals.forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.classList.contains('modal-close')) {
+            modal.classList.remove('visible');
+        }
+    });
+});
         });
     </script>
-
 </body>
 </html>
